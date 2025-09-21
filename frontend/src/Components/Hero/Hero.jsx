@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 
 import "./Hero.css";
 import arrow_icon from "../Assets/arrow.png";
-import hero_image from "../Assets/hero_image.png";
-import p1 from "../Assets/p4.png";
-import p2 from "../Assets/p5.png";
-import p3 from "../Assets/p6.png";
+import hero_image from "../Assets/hero_image.jpg";
+import p1 from "../Assets/p4.jpg";
+import p2 from "../Assets/p5.jpg";
+import p3 from "../Assets/p6.jpg";
 
 import { Link } from "react-router-dom";
 
