@@ -24,13 +24,11 @@ const Hero = () => {
     <div className="hero">
       <div className="hero-left">
         <div>
-          <p>LOWEST PRICES ON YOUR</p>
-
-          <p>DAILY ESSENTIALS</p>
+          <p>KOKULAM COLLECTIONS</p>
         </div>
         <h2>
-          Browse through our diverse range of groceries and make your life
-          healthy
+          Browse through our diverse range of collections and make your life
+          trendy
         </h2>
         <Link to={"/product"}>
           <div className="hero-latest-btn">
