@@ -32,21 +32,13 @@ function App() {
           <Route path="/orderDone" element={<OrderDone />} />
           <Route path="/myprofile" element={<UserProfile />} />
           <Route path="/editProfile/:id" element={<EditProfile />} />
-          <Route
-            path="/vegetable"
-            element={<ShopCategory category="vegetables" />}
-          />
-          <Route path="/fruit" element={<ShopCategory category="fruits" />} />
-          <Route path="/dairys" element={<ShopCategory category="dairy" />} />
-          <Route
-            path="/beverage"
-            element={<ShopCategory category="beverages" />}
-          />
-          <Route path="/snack" element={<ShopCategory category="snacks" />} />
-          <Route path="/bakerys" element={<ShopCategory category="bakery" />} />
-          <Route path="/other" element={<ShopCategory category="others" />} />
+
+          <Route path="/men" element={<ShopCategory category="men" />} />
+          <Route path="/women" element={<ShopCategory category="women" />} />
+          <Route path="/kids" element={<ShopCategory category="kids" />} />
+
           <Route path="/product" element={<Product />}>
-            <Route path=":productId" element={<Product />} />
+          <Route path=":productId" element={<Product />} />
           </Route>
           <Route path="/cart" element={<Cart />} />
           <Route path="/wish" element={<Wish />} />

@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 const cors = require("cors");
-const bcrypt = require("bcrypt"); // ✅ added bcrypt
+const bcrypt = require("bcrypt");
 const { sendWelcomeEmail } = require("./mail");
 
 app.use(express.json());
@@ -70,6 +70,10 @@ const Product = mongoose.model("Product", {
     type: Number,
     require: true,
   },
+  sizes: {
+    type: [String],
+    default: ["S", "M", "L", "XL"]
+  },
   date: {
     type: Date,
     default: Date.now,
@@ -79,6 +83,7 @@ const Product = mongoose.model("Product", {
     default: true,
   },
 });
+
 app.post("/addproduct", async (req, res) => {
   let products = await Product.find({});
   let id;
@@ -96,6 +101,7 @@ app.post("/addproduct", async (req, res) => {
     category: req.body.category,
     new_price: req.body.new_price,
     old_price: req.body.old_price,
+    sizes: req.body.sizes || ["S", "M", "L", "XL"] 
   });
   console.log(product);
   await product.save();
@@ -120,7 +126,7 @@ app.post("/removeproduct", async (req, res) => {
 app.put("/updateProduct/:id", async (req, res) => {
   try {
     const productId = req.params.id;
-    const { name, image, category, new_price, old_price } = req.body;
+    const { name, image, category, new_price, old_price, sizes } = req.body;
 
     // Update product details in the database
     await Product.findByIdAndUpdate(productId, {
@@ -129,6 +135,7 @@ app.put("/updateProduct/:id", async (req, res) => {
       category,
       new_price,
       old_price,
+      sizes // Add sizes field
     });
 
     res.json({
@@ -176,7 +183,11 @@ const Offers = mongoose.model("Offers", {
     type: String,
     require: true,
   },
-  dis_price: {
+  category: {
+    type: String,
+    require: true,
+  },
+  new_price: {
     type: Number,
     require: true,
   },
@@ -184,9 +195,9 @@ const Offers = mongoose.model("Offers", {
     type: Number,
     require: true,
   },
-  dis_pec: {
-    type: Number,
-    require: true,
+  sizes: {
+    type: [String],
+    default: ["S", "M", "L", "XL"]
   },
   date: {
     type: Date,
@@ -211,9 +222,10 @@ app.post("/addOffer", async (req, res) => {
     id: id,
     name: req.body.name,
     image: req.body.image,
+    category: req.body.category,
+    new_price: req.body.new_price,
     old_price: req.body.old_price,
-    dis_price: req.body.dis_price,
-    dis_pec: req.body.dis_pec,
+    sizes: req.body.sizes || ["S", "M", "L", "XL"] 
   });
   console.log(Offe);
   await Offe.save();
@@ -224,7 +236,7 @@ app.post("/addOffer", async (req, res) => {
   });
 });
 
-//remove the product
+//remove the Offer
 app.post("/removeOffer", async (req, res) => {
   await Offers.findOneAndDelete({ id: req.body.id });
   console.log("Removed");
@@ -234,7 +246,7 @@ app.post("/removeOffer", async (req, res) => {
   });
 });
 
-//get the all product
+//get the all Offers
 app.get("/allOffer", async (req, res) => {
   let Offer = await Offers.find({});
   console.log("All Offers Fetched");
@@ -323,7 +335,7 @@ app.post("/signup", async (req, res) => {
 
     let cart = {};
     for (let i = 0; i < 300; i++) {
-      cart[i] = 0;
+      cart[i] = {}; // Changed to empty object to store size quantities
     }
     let wish = {};
     for (let i = 0; i < 300; i++) {
@@ -338,6 +350,7 @@ app.post("/signup", async (req, res) => {
       name: req.body.username,
       email: req.body.email,
       password: hashedPassword,
+      cartData: cart,
       wishData: wish,
       image: req.body.image,
     });
@@ -401,7 +414,7 @@ app.get("/newcollection", async (req, res) => {
 
 // creating popular category
 app.get("/popular", async (req, res) => {
-  let products = await Product.find({ category: "dairy" });
+  let products = await Product.find({ category: "men" });
   let popular = products.slice(0, 4);
   console.log("popular fetchd");
   res.send(popular);
@@ -423,22 +436,32 @@ const fetchUser = async (req, res, next) => {
   }
 };
 
-//end point of cart
+// UPDATED: end point of cart with size support
 app.post("/addtocart", fetchUser, async (req, res) => {
-  console.log("Added", req.body.itemId);
+  console.log("Added", req.body.itemId, "Size:", req.body.size);
   let userData = await Users.findOne({ _id: req.user.id });
-  let cartData = await userData.cartData;
-
-  if (!cartData[req.body.id]) {
-    cartData[req.body.itemId] = 1;
-  } else {
-    cartData[req.body.itemId] += 1;
+  let cartData = userData.cartData;
+  
+  const itemId = req.body.itemId;
+  const size = req.body.size || "default";
+  
+  // Initialize cartData[itemId] as object if it doesn't exist
+  if (!cartData[itemId]) {
+    cartData[itemId] = {};
   }
+  
+  // Initialize size quantity if it doesn't exist
+  if (!cartData[itemId][size]) {
+    cartData[itemId][size] = 1;
+  } else {
+    cartData[itemId][size] += 1;
+  }
+  
   await Users.findByIdAndUpdate({ _id: req.user.id }, { cartData });
   res.send("Added");
 });
 
-//end point for wish
+// UPDATED: end point for wish
 app.post("/addtowish", fetchUser, async (req, res) => {
   console.log("Added", req.body.itemId);
   let userData = await Users.findOne({ _id: req.user.id });
@@ -451,17 +474,30 @@ app.post("/addtowish", fetchUser, async (req, res) => {
   res.send("Added");
 });
 
-//end point remove product from cartData
+// UPDATED: end point remove product from cartData with size support
 app.post("/removefromcart", fetchUser, async (req, res) => {
-  console.log("Removed", req.body.itemId);
+  console.log("Removed", req.body.itemId, "Size:", req.body.size);
   let userData = await Users.findOne({ _id: req.user.id });
-
-  if (userData.cartData[req.body.itemId] > 0)
-    userData.cartData[req.body.itemId] -= 1;
-  await Users.findByIdAndUpdate(
-    { _id: req.user.id },
-    { cartData: userData.cartData }
-  );
+  let cartData = userData.cartData;
+  
+  const itemId = req.body.itemId;
+  const size = req.body.size || "default";
+  
+  if (cartData[itemId] && cartData[itemId][size] > 0) {
+    cartData[itemId][size] -= 1;
+    
+    // Remove the size entry if quantity becomes 0
+    if (cartData[itemId][size] === 0) {
+      delete cartData[itemId][size];
+    }
+    
+    // Remove the item entry if no sizes left
+    if (Object.keys(cartData[itemId]).length === 0) {
+      delete cartData[itemId];
+    }
+  }
+  
+  await Users.findByIdAndUpdate({ _id: req.user.id }, { cartData });
   res.send("Removed");
 });
 
@@ -479,11 +515,21 @@ app.post("/removefromwish", fetchUser, async (req, res) => {
   res.send("Removed");
 });
 
-//end point get cat product
+// UPDATED: end point get cart product with backward compatibility
 app.post("/getcart", fetchUser, async (req, res) => {
   console.log("Get Cart");
   let userData = await Users.findOne({ _id: req.user.id });
-  res.json(userData.cartData);
+  
+  // For backward compatibility, convert old format to new format if needed
+  const cartData = userData.cartData;
+  for (const itemId in cartData) {
+    if (typeof cartData[itemId] === 'number') {
+      // Convert old format to new format
+      cartData[itemId] = { "default": cartData[itemId] };
+    }
+  }
+  
+  res.json(cartData);
 });
 
 // end point of wish

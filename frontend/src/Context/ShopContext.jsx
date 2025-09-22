@@ -5,7 +5,7 @@ export const ShopContext = createContext(null);
 const getDefaultcart = () => {
   let cart = {};
   for (let index = 0; index < 300 + 1; index++) {
-    cart[index] = 0;
+    cart[index] = {}; // Changed from 0 to empty object to store size quantities
   }
   return cart;
 };
@@ -38,7 +38,17 @@ const ShopContextProvider = (props) => {
         body: "",
       })
         .then((res) => res.json())
-        .then((data) => setCartItems(data));
+        .then((data) => {
+          // Convert old cart format to new format with sizes
+          const formattedCart = getDefaultcart();
+          for (const itemId in data) {
+            if (data[itemId] > 0) {
+              // For backward compatibility, assign quantity to a default size
+              formattedCart[itemId] = { "default": data[itemId] };
+            }
+          }
+          setCartItems(formattedCart);
+        });
     }
     if (localStorage.getItem("auth-token")) {
       fetch("http://localhost:4000/getwish", {
@@ -55,8 +65,17 @@ const ShopContextProvider = (props) => {
     }
   }, []);
 
-  const addToCart = (itemId) => {
-    setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] + 1 }));
+  const addToCart = (itemId, size = "default") => {
+    setCartItems((prev) => {
+      const newCart = { ...prev };
+      if (!newCart[itemId][size]) {
+        newCart[itemId][size] = 1;
+      } else {
+        newCart[itemId][size] += 1;
+      }
+      return newCart;
+    });
+    
     if (localStorage.getItem("auth-token")) {
       fetch("http://localhost:4000/addtocart", {
         method: "POST",
@@ -65,12 +84,13 @@ const ShopContextProvider = (props) => {
           "auth-token": `${localStorage.getItem("auth-token")}`,
           "Content-type": "application/json",
         },
-        body: JSON.stringify({ itemId: itemId }),
+        body: JSON.stringify({ itemId: itemId, size: size }),
       })
         .then((res) => res.json())
         .then((data) => console.log(data));
     }
   };
+
   const addToWish = (itemId) => {
     setWishItems((prev) => ({ ...prev, [itemId]: prev[itemId] + 1 }));
     if (localStorage.getItem("auth-token")) {
@@ -88,8 +108,20 @@ const ShopContextProvider = (props) => {
     }
   };
 
-  const removeFromCart = (itemId) => {
-    setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] - 1 }));
+  const removeFromCart = (itemId, size = "default") => {
+    setCartItems((prev) => {
+      const newCart = { ...prev };
+      if (newCart[itemId][size] > 0) {
+        newCart[itemId][size] -= 1;
+        
+        // Remove the size entry if quantity becomes 0
+        if (newCart[itemId][size] === 0) {
+          delete newCart[itemId][size];
+        }
+      }
+      return newCart;
+    });
+    
     if (localStorage.getItem("auth-token")) {
       fetch("http://localhost:4000/removefromcart", {
         method: "POST",
@@ -98,12 +130,13 @@ const ShopContextProvider = (props) => {
           "auth-token": `${localStorage.getItem("auth-token")}`,
           "Content-type": "application/json",
         },
-        body: JSON.stringify({ itemId: itemId }),
+        body: JSON.stringify({ itemId: itemId, size: size }),
       })
         .then((res) => res.json())
         .then((data) => console.log(data));
     }
   };
+
   const removeFromWish = (itemId) => {
     setWishItems((prev) => ({ ...prev, [itemId]: prev[itemId] - 1 }));
     if (localStorage.getItem("auth-token")) {
@@ -123,26 +156,33 @@ const ShopContextProvider = (props) => {
 
   const getTotalCartAmount = () => {
     let totalAmount = 0;
-    for (const item in cartItems) {
-      if (cartItems[item] > 0) {
-        let itemInfo = all_product.find(
-          (product) => product.id === Number(item)
-        );
-        totalAmount += itemInfo.new_price * cartItems[item];
+    for (const itemId in cartItems) {
+      for (const size in cartItems[itemId]) {
+        if (cartItems[itemId][size] > 0) {
+          let itemInfo = all_product.find(
+            (product) => product.id === Number(itemId)
+          );
+          if (itemInfo) {
+            totalAmount += itemInfo.new_price * cartItems[itemId][size];
+          }
+        }
       }
     }
     return totalAmount;
   };
+
   const getTotalCartItem = () => {
     let totalItem = 0;
-    for (const item in cartItems) {
-      if (cartItems[item] > 0) {
-        totalItem += cartItems[item];
+    for (const itemId in cartItems) {
+      for (const size in cartItems[itemId]) {
+        if (cartItems[itemId][size] > 0) {
+          totalItem += cartItems[itemId][size];
+        }
       }
     }
-    //console.log(totalItem);
     return totalItem;
   };
+
   const getTotalWishItem = () => {
     let totalWishItem = 0;
     for (const item in wishItems) {
@@ -150,8 +190,17 @@ const ShopContextProvider = (props) => {
         totalWishItem += wishItems[item];
       }
     }
-    // console.log(totalWishItem);
     return totalWishItem;
+  };
+
+  // Helper function to get quantity for a specific item and size
+  const getCartItemQuantity = (itemId, size = "default") => {
+    return cartItems[itemId] && cartItems[itemId][size] ? cartItems[itemId][size] : 0;
+  };
+
+  // Helper function to get all sizes with quantities for an item
+  const getItemSizes = (itemId) => {
+    return cartItems[itemId] || {};
   };
 
   const contextValue = {
@@ -162,15 +211,18 @@ const ShopContextProvider = (props) => {
     wishItems,
     removeFromCart,
     getTotalCartItem,
-    addToWish,
     getTotalWishItem,
     removeFromWish,
     getTotalCartAmount,
+    getCartItemQuantity,
+    getItemSizes
   };
+  
   return (
     <ShopContext.Provider value={contextValue}>
       {props.children}
     </ShopContext.Provider>
   );
 };
+
 export default ShopContextProvider;

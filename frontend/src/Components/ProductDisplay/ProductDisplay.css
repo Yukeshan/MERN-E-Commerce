@@ -1,3 +1,45 @@
+.productdisplay-right-sizes h3 {
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sizes {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.size-option {
+  padding: 8px 12px;
+  border: 1px solid #ebebeb;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.size-option:hover {
+  border-color: #ff4141;
+}
+
+.size-option.selected {
+  background-color: #ff4141;
+  color: white;
+  border-color: #ff4141;
+}
+
+.size-selector {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.size-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .productdisplay {
   display: flex;
   margin: 20px 150px;

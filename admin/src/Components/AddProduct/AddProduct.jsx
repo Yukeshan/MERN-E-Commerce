@@ -4,27 +4,38 @@ import upload_are from "../../assets/upload_area.svg";
 
 const AddProduct = () => {
   const [image, setImage] = useState(false);
+  const [selectedSizes, setSelectedSizes] = useState(["S", "M", "L", "XL"]);
 
   const [productDetails, setProductDetails] = useState({
     name: "",
     image: "",
-    category: "vegetables",
+    category: "men",
     new_price: "",
     old_price: "",
+    sizes: ["S", "M", "L", "XL"]
   });
 
   const imageHandler = (e) => {
     setImage(e.target.files[0]);
   };
+  
   const changeHandler = (e) => {
     setProductDetails({ ...productDetails, [e.target.name]: e.target.value });
+  };
+
+  const handleSizeChange = (size) => {
+    if (selectedSizes.includes(size)) {
+      setSelectedSizes(selectedSizes.filter(s => s !== size));
+    } else {
+      setSelectedSizes([...selectedSizes, size]);
+    }
   };
 
   const Add_Product = async () => {
     console.log(productDetails);
 
     let reponseData;
-    let product = productDetails;
+    let product = {...productDetails, sizes: selectedSizes};
 
     let formData = new FormData();
     formData.append("product", image);
@@ -102,14 +113,25 @@ const AddProduct = () => {
           name="category"
           className="add-product-selector"
         >
-          <option value="vegetables"> Vegetables</option>
-          <option value="fruits">Fruits</option>
-          <option value="dairy">Dairy</option>
-          <option value="beverages"> Beverages</option>
-          <option value="snacks">Snacks</option>
-          <option value="bakery">Bakery</option>
-          <option value="others">Others</option>
+          <option value="men"> Men</option>
+          <option value="women">Women</option>
+          <option value="kids">Kids</option>
         </select>
+      </div>
+      <div className="addproduct-itemfield">
+        <p>Available Sizes</p>
+        <div className="size-selector">
+          {["S", "M", "L", "XL"].map(size => (
+            <label key={size} className="size-checkbox">
+              <input
+                type="checkbox"
+                checked={selectedSizes.includes(size)}
+                onChange={() => handleSizeChange(size)}
+              />
+              {size}
+            </label>
+          ))}
+        </div>
       </div>
       <div className="addproduct-itemfield">
         <label htmlFor="file-input">

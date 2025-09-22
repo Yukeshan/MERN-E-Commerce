@@ -1,35 +1,45 @@
-// ProductDetail.js (React.js)
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, Link, useNavigate } from "react-router-dom";
 
 const EditProduct = () => {
-  //const [product, setProduct] = useState(null);
   let navigate = useNavigate();
   const [image, setImage] = useState(false);
+  const [selectedSizes, setSelectedSizes] = useState(["S", "M", "L", "XL"]);
+  
   const [productDetails, setProductDetails] = useState({
     name: "",
     image: "",
-    category: "vegetables",
+    category: "men",
     new_price: "",
     old_price: "",
+    sizes: ["S", "M", "L", "XL"]
   });
   const { id } = useParams();
 
   const imageHandler = (e) => {
     setImage(e.target.files[0]);
   };
+  
   const changeHandler = (e) => {
     setProductDetails({ ...productDetails, [e.target.name]: e.target.value });
   };
+
+  const handleSizeChange = (size) => {
+    if (selectedSizes.includes(size)) {
+      setSelectedSizes(selectedSizes.filter(s => s !== size));
+    } else {
+      setSelectedSizes([...selectedSizes, size]);
+    }
+  };
+
   const Update_Product = async () => {
     try {
       console.log(productDetails);
 
       const updateResponse = await axios.put(
         `http://localhost:4000/updateProduct/${id}`,
-        productDetails
+        {...productDetails, sizes: selectedSizes}
       );
 
       if (updateResponse.data.success) {
@@ -51,6 +61,7 @@ const EditProduct = () => {
           `http://localhost:4000/products/${id}`
         );
         setProductDetails(response.data);
+        setSelectedSizes(response.data.sizes || ["S", "M", "L", "XL"]);
       } catch (error) {
         console.error("Error fetching product:", error);
       }
@@ -106,14 +117,25 @@ const EditProduct = () => {
               name="category"
               className="add-product-selector"
             >
-              <option value="vegetables"> Vegetables</option>
-              <option value="fruits">Fruits</option>
-              <option value="dairy">Dairy</option>
-              <option value="beverages"> Beverages</option>
-              <option value="snacks">Snacks</option>
-              <option value="bakery">Bakery</option>
-              <option value="others">Others</option>
+              <option value="men"> Men</option>
+              <option value="women">Women</option>
+              <option value="kids">Kids</option>
             </select>
+          </div>
+          <div className="addproduct-itemfield">
+            <p>Available Sizes</p>
+            <div className="size-selector">
+              {["S", "M", "L", "XL"].map(size => (
+                <label key={size} className="size-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedSizes.includes(size)}
+                    onChange={() => handleSizeChange(size)}
+                  />
+                  {size}
+                </label>
+              ))}
+            </div>
           </div>
 
           <button

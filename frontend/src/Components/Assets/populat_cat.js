@@ -6,32 +6,26 @@ import p4_img from "./product_4.png";
 let populat_cat = [
   {
     id: 1,
-    name: "Vegetables",
+    name: "Men",
     image: p1_img,
     new_price: 50.0,
     old_price: 80.5,
   },
   {
     id: 2,
-    name: "Fruits",
+    name: "Womwn",
     image: p2_img,
     new_price: 85.0,
     old_price: 120.5,
   },
   {
     id: 3,
-    name: "Dairy",
+    name: "Kids",
     image: p3_img,
     new_price: 60.0,
     old_price: 100.5,
   },
-  {
-    id: 4,
-    name: "Beverages",
-    image: p4_img,
-    new_price: 100.0,
-    old_price: 150.0,
-  },
+
 ];
 
 export default populat_cat;

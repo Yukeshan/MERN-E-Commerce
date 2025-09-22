@@ -65,6 +65,7 @@ const ListProduct = () => {
         <p>Title</p>
         <p>Old Price</p>
         <p>New Price</p>
+        <p>Sizes</p>
         <p>Category</p>
         <p>Action</p>
       </div>
@@ -83,6 +84,7 @@ const ListProduct = () => {
                 <p>Rs.{product.old_price}</p>
                 <p>Rs.{product.new_price}</p>
                 <p>{product.category}</p>
+                <p>{product.sizes ? product.sizes.join(", ") : "S, M, L, XL"}</p>
                 <div className=" flex flex-col items-center gap-3">
                   <img
                     onClick={() => {

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import "./CartItems.css";
 import { ShopContext } from "../../Context/ShopContext";
 import remove_icon from "../Assets/cart_cross_icon.png";
@@ -14,6 +14,8 @@ const CartItems = (props) => {
     cartItems,
     removeFromCart,
     addToCart,
+    getCartItemQuantity,
+    getItemSizes,
   } = useContext(ShopContext);
 
   const navigate = useNavigate();
@@ -31,27 +33,48 @@ const CartItems = (props) => {
 
     const data = [];
     all_product.forEach((item) => {
-      let Quantity = cartItems[item.id];
-      if (Quantity > 0) {
-        let total = item.new_price * Quantity;
-        data.push([item.name, Quantity, item.new_price, total]);
+      const itemSizes = getItemSizes(item.id);
+      for (const size in itemSizes) {
+        if (itemSizes[size] > 0) {
+          let total = item.new_price * itemSizes[size];
+          data.push([item.name, size, itemSizes[size], item.new_price, total]);
+        }
       }
     });
 
     doc.autoTable({
-      head: [["Title", "Quantity", "Unit Price", "Total Price"]],
+      head: [["Title", "Size", "Quantity", "Unit Price", "Total Price"]],
       body: data,
     });
 
     doc.save("cart_details.pdf");
   };
 
+  // Function to get all cart items with their sizes and quantities
+  const getCartItemsWithSizes = () => {
+    const items = [];
+    all_product.forEach((product) => {
+      const sizes = getItemSizes(product.id);
+      for (const size in sizes) {
+        if (sizes[size] > 0) {
+          items.push({
+            ...product,
+            size,
+            quantity: sizes[size],
+            total: product.new_price * sizes[size]
+          });
+        }
+      }
+    });
+    return items;
+  };
+
   return (
     <div className="main-cart">
-      <div className=" flex items-center justify-between mx-[150px]">
-        <center>Your Cart List</center>
+      <div className="flex items-center justify-between mx-[150px]">
+        <h1 className="text-2xl font-bold">Your Cart List</h1>
         <button
-          className=" bg-black text-white text-xl font-bold py-2 px-6 rounded-md  left-0"
+          className="bg-black text-white text-xl font-bold py-2 px-6 rounded-md"
           onClick={createPdf}
         >
           Print Cart details
@@ -62,6 +85,7 @@ const CartItems = (props) => {
         <div className="cartitems-fomate-main">
           <p>Products</p>
           <p>Title</p>
+          <p>Size</p>
           <p>Price</p>
           <p>Quantity</p>
           <p>Total</p>
@@ -69,50 +93,57 @@ const CartItems = (props) => {
         </div>
         <hr />
 
-        {all_product.map((e) => {
-          if (cartItems[e.id] > 0) {
-            return (
-              <div key={e.id}>
-                <div className="cartitems-formate cartitems-fomate-main">
-                  <img src={e.image} alt="" className="carticon-product-icon" />
-                  <p>{e.name}</p>
-                  <p>Rs.{e.new_price}</p>
-                  <div className=" flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        removeFromCart(e.id);
-                      }}
-                      className="cartitems-quantity"
-                    >
-                      -
-                    </button>
-                    {cartItems[e.id]}
-                    <button
-                      onClick={() => {
-                        addToCart(e.id);
-                      }}
-                      className="cartitems-quantity"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <p>Rs.{e.new_price * cartItems[e.id]}</p>
-                  <img
-                    className="cartitems-remove-icon w-[15px] cursor-pointer mx-10 my-0"
-                    src={remove_icon}
-                    onClick={() => {
-                      removeFromCart(e.id);
-                    }}
-                    alt=""
-                  />
-                </div>
-                <hr />
+        {getCartItemsWithSizes().map((item, index) => (
+          <div key={`${item.id}-${item.size}-${index}`}>
+            <div className="cartitems-formate cartitems-fomate-main">
+              <img src={item.image} alt="" className="carticon-product-icon" />
+              <p>{item.name}</p>
+              <p className="size-display">{item.size}</p>
+              <p>Rs.{item.new_price}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    removeFromCart(item.id, item.size);
+                  }}
+                  className="cartitems-quantity"
+                >
+                  -
+                </button>
+                {item.quantity}
+                <button
+                  onClick={() => {
+                    addToCart(item.id, item.size);
+                  }}
+                  className="cartitems-quantity"
+                >
+                  +
+                </button>
               </div>
-            );
-          }
-          return null;
-        })}
+
+              <p>Rs.{item.total}</p>
+              <img
+                className="cartitems-remove-icon w-[15px] cursor-pointer mx-10 my-0"
+                src={remove_icon}
+                onClick={() => {
+                  // Remove all quantities of this size
+                  for (let i = 0; i < item.quantity; i++) {
+                    removeFromCart(item.id, item.size);
+                  }
+                }}
+                alt="Remove"
+              />
+            </div>
+            <hr />
+          </div>
+        ))}
+        
+        {getCartItemsWithSizes().length === 0 && (
+          <div className="empty-cart-message">
+            <p>Your cart is empty</p>
+            <button onClick={() => navigate('/')}>Continue Shopping</button>
+          </div>
+        )}
+        
         <div className="cartitems-down">
           <div className="cartitems-total">
             <h1>Cart Totals</h1>

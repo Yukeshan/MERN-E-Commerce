@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import "./ProductDisplay.css";
 import star_icon from "../Assets/star_icon.png";
 import star_dull_icon from "../Assets/star_dull_icon.png";
@@ -10,6 +10,7 @@ const ProductDisplay = (props) => {
   const { product } = props;
   const { addToCart, addToWish } = useContext(ShopContext);
   const navigate = useNavigate();
+  const [selectedSize, setSelectedSize] = useState("");
 
   return (
     <div className="productdisplay">
@@ -62,18 +63,40 @@ const ProductDisplay = (props) => {
             Rs.{product.new_price}
           </div>
         </div>
+        
+        {/* Size Selection */}
+        <div className="productdisplay-right-sizes">
+          <h3>Select Size</h3>
+          <div className="sizes">
+            {(product.sizes || ["S", "M", "L", "XL"]).map((size) => (
+              <div
+                key={size}
+                className={`size-option ${selectedSize === size ? "selected" : ""}`}
+                onClick={() => setSelectedSize(size)}
+              >
+                {size}
+              </div>
+            ))}
+          </div>
+        </div>
+        
         <div className="productdisplay-right-description">
           A lightweight, usually knitted, pullover shirt, close-fitting and wi a
           round neckline and short sleeves, worn as an undershirt or outer
           garment.
         </div>
 
+      
         <button
           onClick={() => {
-            addToCart(product.id),
-              alert("Product Added Into Cart..!"),
-              navigate("/product"),
-              window.location.reload();
+            if (!selectedSize) {
+              alert("Please select a size first");
+              return;
+            }
+            addToCart(product.id, selectedSize);
+            alert(`Product (Size: ${selectedSize}) Added Into Cart..!`);
+            navigate("/product");
+            window.location.reload();
           }}
         >
           ADD TO CART
@@ -83,8 +106,8 @@ const ProductDisplay = (props) => {
           className="add-wish"
           onClick={() => {
             addToWish(product.id),
-              alert("Product Added Into Wishlist..!"),
-              navigate("/product");
+            alert("Product Added Into Wishlist..!"),
+            navigate("/product");
           }}
         >
           ADD TO <img className="wish" src={wishlist_red} alt="" />
@@ -92,6 +115,9 @@ const ProductDisplay = (props) => {
 
         <p className="productdisplay-right-category">
           <span>Category : {product.category}</span>
+        </p>
+        <p className="productdisplay-right-sizes">
+          <span>Available Sizes : {(product.sizes || ["S", "M", "L", "XL"]).join(", ")}</span>
         </p>
       </div>
     </div>
